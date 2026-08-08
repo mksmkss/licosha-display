@@ -8,17 +8,19 @@
   Source: https://github.com/notofonts/noto-cjk/releases
     (16_NotoSansJP.zip / 12_NotoSerifJP.zip, Regular weight, CFF-flavored .otf)
 
-  Reprocessed in two steps before being committed here (see pdf/fonts.ts for
-  why): subset to JIS X 0208 + Latin with `pyftsubset`, then converted from
-  CFF to TrueType (glyf outlines) with `otf2ttf`
-  (https://github.com/googlefonts/otf2ttf). Reproduce with:
+  Reprocessed in three steps before being committed here (see pdf/fonts.ts
+  for why each is needed): subset to JIS X 0208 + Latin and strip GSUB/GPOS
+  layout tables with `pyftsubset`, then convert from CFF to TrueType (glyf
+  outlines) with `otf2ttf` (https://github.com/googlefonts/otf2ttf).
+  Reproduce with:
 
   ```sh
   # unicode ranges: JIS X 0208 derived from Python's shift_jis codec,
   # plus Google Fonts' "latin" unicode-range for NotoSansJP.
   pyftsubset NotoSansJP-Regular.otf \
     --output-file=NotoSansJP-Regular.subset.otf \
-    --unicodes="$(cat jisx0208_and_latin_unicodes.txt)"
+    --unicodes="$(cat jisx0208_and_latin_unicodes.txt)" \
+    --layout-features=''
   otf2ttf NotoSansJP-Regular.subset.otf -o NotoSansJP-Regular.ttf
   # (same for NotoSerifJP-Regular.otf)
   ```
