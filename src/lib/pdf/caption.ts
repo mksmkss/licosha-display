@@ -30,12 +30,13 @@ const LAYOUT: GridLayout = {
 const TITLE_SIZE = 16;
 const PENNAME_SIZE = 13;
 const DESCRIPTION_SIZE = 12;
-const RECT_HEIGHT_MM = 14;
 const NOTAKING_WIDTH_MM = 12;
 const DATA_MATRIX_WIDTH_MM = 18;
 const DESCRIPTION_MAX_LEN = 18;
-/** Matches the original app's fixed size (rect_height - 2mm). */
-export const DEFAULT_SNS_QR_SIZE_MM = RECT_HEIGHT_MM - 2;
+/** Matches the original app's fixed size (rect_height 14mm - 2mm). */
+export const DEFAULT_SNS_QR_SIZE_MM = 12;
+/** Top/bottom margin between the dark bar and the QR codes it holds. */
+const SNS_QR_BAR_MARGIN_MM = 2;
 /** Horizontal gap between consecutive SNS QR codes on the same card. */
 const SNS_QR_GAP_MM = 3;
 
@@ -108,6 +109,10 @@ export async function generateCaptionPdf(params: CaptionPdfParams): Promise<Capt
       const { x, y } = cardPosition(LAYOUT, slot);
       const cardW = LAYOUT.cardWidth;
       const cardH = LAYOUT.cardHeight;
+      // The dark bar grows/shrinks with the QR size so the QR always fits
+      // with SNS_QR_BAR_MARGIN_MM of headroom, instead of a fixed bar the
+      // QR could overflow.
+      const barHeightMm = snsQrSizeMm + SNS_QR_BAR_MARGIN_MM;
 
       page.drawRectangle({
         x,
@@ -121,7 +126,7 @@ export async function generateCaptionPdf(params: CaptionPdfParams): Promise<Capt
         x,
         y,
         width: cardW,
-        height: toPx(RECT_HEIGHT_MM),
+        height: toPx(barHeightMm),
         color: CAPTION_INK,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -135,7 +140,7 @@ export async function generateCaptionPdf(params: CaptionPdfParams): Promise<Capt
 
       const pennameWidth = font.widthOfTextAtSize(plate.penname, PENNAME_SIZE);
       const pennameX = x + cardW - cardW * 0.08 - pennameWidth;
-      const pennameY = y + toPx(RECT_HEIGHT_MM) / 2 - PENNAME_SIZE / 2 + 2;
+      const pennameY = y + toPx(barHeightMm) / 2 - PENNAME_SIZE / 2 + 2;
       page.drawText(plate.penname, {
         x: pennameX,
         y: pennameY,
@@ -169,7 +174,7 @@ export async function generateCaptionPdf(params: CaptionPdfParams): Promise<Capt
         const qrSize = toPx(snsQrSizeMm);
         page.drawImage(embedded, {
           x: x + l * toPx(snsQrSizeMm + SNS_QR_GAP_MM) + toPx(9),
-          y: y + (toPx(RECT_HEIGHT_MM) - qrSize) / 2,
+          y: y + (toPx(barHeightMm) - qrSize) / 2,
           width: qrSize,
           height: qrSize,
         });
