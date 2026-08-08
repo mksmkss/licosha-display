@@ -4,7 +4,15 @@ const STORAGE_KEYS = {
   year: "licosha-display:year",
   exhibitionTitle: "licosha-display:exhibitionTitle",
   showDataMatrix: "licosha-display:showDataMatrix",
+  snsQrSizeMm: "licosha-display:snsQrSizeMm",
 } as const;
+
+// Mirrors DEFAULT_SNS_QR_SIZE_MM in lib/pdf/caption.ts (kept here as a
+// literal rather than imported, so this lightweight module doesn't pull the
+// heavy pdf-lib-based pipeline into the eagerly-loaded main chunk).
+const DEFAULT_SNS_QR_SIZE_MM = 12;
+const SNS_QR_SIZE_MIN_MM = 6;
+const SNS_QR_SIZE_MAX_MM = 20;
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("#app root element not found");
@@ -39,6 +47,21 @@ app.innerHTML = `
         <span>アンケート用のDataMatrixを表示する</span>
       </label>
 
+      <label class="field">
+        <span>
+          キャプションPDFのSNS QRコードのサイズ
+          (<span id="sns-qr-size-value">${DEFAULT_SNS_QR_SIZE_MM}</span>mm)
+        </span>
+        <input
+          type="range"
+          id="sns-qr-size"
+          min="${SNS_QR_SIZE_MIN_MM}"
+          max="${SNS_QR_SIZE_MAX_MM}"
+          step="1"
+          value="${DEFAULT_SNS_QR_SIZE_MM}"
+        />
+      </label>
+
       <button type="submit" id="generate-button">生成する</button>
     </form>
 
@@ -55,12 +78,20 @@ const excelInput = document.querySelector<HTMLInputElement>("#excel-file")!;
 const yearInput = document.querySelector<HTMLInputElement>("#year")!;
 const titleInput = document.querySelector<HTMLInputElement>("#exhibition-title")!;
 const showDataMatrixInput = document.querySelector<HTMLInputElement>("#show-datamatrix")!;
+const snsQrSizeInput = document.querySelector<HTMLInputElement>("#sns-qr-size")!;
+const snsQrSizeValueEl = document.querySelector<HTMLSpanElement>("#sns-qr-size-value")!;
 const generateButton = document.querySelector<HTMLButtonElement>("#generate-button")!;
 const statusEl = document.querySelector<HTMLDivElement>("#status")!;
 
 yearInput.value = localStorage.getItem(STORAGE_KEYS.year) ?? "";
 titleInput.value = localStorage.getItem(STORAGE_KEYS.exhibitionTitle) ?? "";
 showDataMatrixInput.checked = localStorage.getItem(STORAGE_KEYS.showDataMatrix) === "true";
+snsQrSizeInput.value = localStorage.getItem(STORAGE_KEYS.snsQrSizeMm) ?? String(DEFAULT_SNS_QR_SIZE_MM);
+snsQrSizeValueEl.textContent = snsQrSizeInput.value;
+
+snsQrSizeInput.addEventListener("input", () => {
+  snsQrSizeValueEl.textContent = snsQrSizeInput.value;
+});
 
 function setStatus(message: string, kind: "progress" | "error" | "success"): void {
   statusEl.textContent = message;
@@ -85,6 +116,7 @@ form.addEventListener("submit", async (event) => {
   const year = yearInput.value.trim();
   const exhibitionTitle = titleInput.value.trim();
   const showDataMatrix = showDataMatrixInput.checked;
+  const snsQrSizeMm = Number(snsQrSizeInput.value);
 
   if (!file || !year || !exhibitionTitle) {
     setStatus("すべての項目を入力してください", "error");
@@ -94,6 +126,7 @@ form.addEventListener("submit", async (event) => {
   localStorage.setItem(STORAGE_KEYS.year, year);
   localStorage.setItem(STORAGE_KEYS.exhibitionTitle, exhibitionTitle);
   localStorage.setItem(STORAGE_KEYS.showDataMatrix, String(showDataMatrix));
+  localStorage.setItem(STORAGE_KEYS.snsQrSizeMm, String(snsQrSizeMm));
 
   generateButton.disabled = true;
   try {
@@ -104,6 +137,7 @@ form.addEventListener("submit", async (event) => {
       year,
       exhibitionTitle,
       showDataMatrix,
+      snsQrSizeMm,
       onProgress: (message) => setStatus(message, "progress"),
     });
 

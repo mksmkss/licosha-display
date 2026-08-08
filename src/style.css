@@ -86,6 +86,11 @@ form {
   gap: 1rem;
 }
 
+input[type="range"] {
+  accent-color: var(--accent);
+  width: 100%;
+}
+
 input[type="text"],
 input[type="file"] {
   font: inherit;

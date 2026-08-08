@@ -34,6 +34,10 @@ const RECT_HEIGHT_MM = 14;
 const NOTAKING_WIDTH_MM = 12;
 const DATA_MATRIX_WIDTH_MM = 18;
 const DESCRIPTION_MAX_LEN = 18;
+/** Matches the original app's fixed size (rect_height - 2mm). */
+export const DEFAULT_SNS_QR_SIZE_MM = RECT_HEIGHT_MM - 2;
+/** Horizontal gap between consecutive SNS QR codes on the same card. */
+const SNS_QR_GAP_MM = 3;
 
 function sanitizeFilename(name: string): string {
   return name.replace(/\//g, "-");
@@ -53,6 +57,8 @@ export interface CaptionPdfParams {
   uuids: string[];
   showDataMatrix: boolean;
   assets: CaptionAssets;
+  /** Size (mm, square) of each SNS QR code drawn in a card's dark bar. */
+  snsQrSizeMm?: number;
 }
 
 export interface CaptionPdfResult {
@@ -65,7 +71,16 @@ export interface CaptionPdfResult {
 }
 
 export async function generateCaptionPdf(params: CaptionPdfParams): Promise<CaptionPdfResult> {
-  const { plates, descriptions, idsDict, permissionDict, uuids, showDataMatrix, assets } = params;
+  const {
+    plates,
+    descriptions,
+    idsDict,
+    permissionDict,
+    uuids,
+    showDataMatrix,
+    assets,
+    snsQrSizeMm = DEFAULT_SNS_QR_SIZE_MM,
+  } = params;
 
   const pages = new Map<string, Uint8Array>();
   const qrImages = new Map<string, Uint8Array>();
@@ -151,10 +166,10 @@ export async function generateCaptionPdf(params: CaptionPdfParams): Promise<Capt
           qrImages.set(`${sns}_${sanitizeFilename(id)}.png`, pngBytes);
         }
         const embedded = await imageCache.get(cacheKey, pngBytes);
-        const qrSize = toPx(RECT_HEIGHT_MM - 2);
+        const qrSize = toPx(snsQrSizeMm);
         page.drawImage(embedded, {
-          x: x + l * toPx(RECT_HEIGHT_MM + 1) + toPx(9),
-          y: y + toPx(1),
+          x: x + l * toPx(snsQrSizeMm + SNS_QR_GAP_MM) + toPx(9),
+          y: y + (toPx(RECT_HEIGHT_MM) - qrSize) / 2,
           width: qrSize,
           height: qrSize,
         });

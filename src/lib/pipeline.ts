@@ -23,6 +23,8 @@ export interface GenerateParams {
   year: string;
   exhibitionTitle: string;
   showDataMatrix: boolean;
+  /** Size (mm, square) of the SNS QR codes drawn in each Caption PDF card. */
+  snsQrSizeMm: number;
   onProgress: (message: string) => void;
 }
 
@@ -41,7 +43,7 @@ export interface GenerateResult {
  * page load.
  */
 export async function runGenerationPipeline(params: GenerateParams): Promise<GenerateResult> {
-  const { file, year, exhibitionTitle, showDataMatrix, onProgress } = params;
+  const { file, year, exhibitionTitle, showDataMatrix, snsQrSizeMm, onProgress } = params;
 
   onProgress("Excelを読み込んでいます...");
   // Each module gets its own workbook parse, mirroring how the Python app's
@@ -76,6 +78,7 @@ export async function runGenerationPipeline(params: GenerateParams): Promise<Gen
     uuids,
     showDataMatrix,
     assets: { instagramSvg, xSvg, cameraOffSvg },
+    snsQrSizeMm,
   });
 
   onProgress("名札PDFを生成しています...");
